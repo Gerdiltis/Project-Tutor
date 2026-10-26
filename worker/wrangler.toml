@@ -1,0 +1,12 @@
+name = "project-tutor-ai"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# Orígenes que pueden llamar al Worker (tu GitHub Pages), separados por comas.
+ALLOWED_ORIGINS = "https://gerdiltis.github.io"
+MODEL = "claude-haiku-5-5"
+
+# La clave NO va aquí. Configúrala como secreto:
+#   npx wrangler secret put ANTHROPIC_API_KEY
