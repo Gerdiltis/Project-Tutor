@@ -122,7 +122,7 @@
         const ch = n * (n - 1) / 2;
         const ok = `${ch} canales`;
         return {
-          q: `El equipo de {{proyecto}} tiene {{equipo}} personas, más tú como director/a. ¿Cuántos canales de comunicación potenciales hay?`,
+          q: `El equipo de {{proyecto}} tiene {{equipo}} personas, más tú como jefa de proyecto. ¿Cuántos canales de comunicación potenciales hay?`,
           ok,
           ko: uniq(ok, [`${n * (n - 1)} canales`, `${n} canales`, `${(n + 1) * n / 2} canales`], i => `${ch + i * 3} canales`),
           e: `Canales = n(n-1)/2 con n = ${n} personas → ${n}×${n - 1}/2 = ${ch}. Cada persona nueva aumenta mucho la complejidad de la comunicación.`

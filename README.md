@@ -15,6 +15,8 @@ En cada partida se genera un proyecto distinto (según el sector elegido) con su
 | 7 · Volcán de los Riesgos | Riesgos |
 | Desafío final · Templo de los Principios | Los 6 principios (jefe final: el Auditor del PMO) |
 
+Cada mundo es un tablero hexagonal tipo Catan, visto desde arriba, con terrenos según su tema (bosques en Alcance, trigales en Cronograma, minas de oro en Finanzas, lava en Riesgos...). Las preguntas son fichas numeradas: si aciertas construyes un poblado; si fallas, el ladrón ocupa la casilla.
+
 Al terminar: puntuación, rango, aciertos por dominio y un plan de estudio con los puntos débiles.
 
 ## Jugar en local
@@ -77,8 +79,10 @@ js/pmbok.js         Principios, dominios y banco de preguntas
 js/sectors.js       Plantillas de proyectos por sector
 js/generator.js     Generador de proyectos (procedural + IA opcional)
 js/questions.js     Preguntas calculadas y montaje de cada mundo
+js/board.js         Tablero hexagonal tipo Catan de cada mundo
 js/game.js          Pantallas, puntuación y guardado
-js/sprites.js       Sprites pixel art dibujados en código
+js/scene.js         Fondo pixel art: calle nocturna con fachadas, balcones y neones
+js/sprites.js       Sprites pixel art (jefa de proyecto, mentor, auditor e iconos)
 js/sound.js         Efectos de sonido chiptune (WebAudio)
 worker/             Cloudflare Worker para la IA opcional
 ```

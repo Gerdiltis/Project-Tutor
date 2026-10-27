@@ -15,43 +15,43 @@ window.PMBOK = {
 
   domains: [
     {
-      id: "gobernanza", name: "Gobernanza", world: "Castillo de la Gobernanza", sprite: "castle", color: "#94b0c2",
+      id: "gobernanza", name: "Gobernanza", world: "Castillo de la Gobernanza", sprite: "castle", color: "#2b5fae", neon: "#4fe3ff",
       intro: "Aquí se decide quién decide. La gobernanza alinea el proyecto con la estrategia de la organización, define roles, autoridad, comités y cómo se aprueban los cambios. También integra el resto de dominios: es el 'pegamento' del proyecto.",
       outcomes: ["Proyecto autorizado y alineado con la estrategia", "Roles, autoridad y escalados claros", "Cambios evaluados y aprobados de forma controlada", "Enfoque (predictivo, adaptativo o híbrido) adaptado al contexto"],
       tip: "Repasa el acta de constitución, el control integrado de cambios, el rol del patrocinador y la adaptación (tailoring)."
     },
     {
-      id: "alcance", name: "Alcance", world: "Bosque del Alcance", sprite: "tree", color: "#38b764",
+      id: "alcance", name: "Alcance", world: "Bosque del Alcance", sprite: "tree", color: "#2f8f5b", neon: "#a7f070",
       intro: "En este bosque es fácil perderse. El dominio de Alcance define y controla qué trabajo SÍ y qué trabajo NO forma parte del proyecto: requisitos, EDT/WBS, backlog y aceptación de entregables.",
       outcomes: ["Requisitos claros y trazables", "Entregables definidos y descompuestos", "Aceptación formal de entregables", "Cambios de alcance controlados (sin scope creep)"],
       tip: "Repasa la EDT/WBS, la línea base del alcance, la matriz de trazabilidad y la diferencia entre validar alcance y controlar calidad."
     },
     {
-      id: "cronograma", name: "Cronograma", world: "Torre del Reloj", sprite: "clock", color: "#ffcd75",
+      id: "cronograma", name: "Cronograma", world: "Torre del Reloj", sprite: "clock", color: "#e0a43a", neon: "#ff4fa3",
       intro: "Cada engranaje cuenta. El dominio de Cronograma planifica y controla CUÁNDO se hace el trabajo: secuencias, duraciones, ruta crítica, hitos, iteraciones y técnicas de compresión.",
       outcomes: ["Secuencia y duración realistas", "Ruta crítica identificada", "Hitos y cadencias acordados", "Desviaciones detectadas y corregidas a tiempo"],
       tip: "Repasa ruta crítica y holgura, estimación PERT, fast tracking vs. crashing y el uso de timeboxes."
     },
     {
-      id: "finanzas", name: "Finanzas", world: "Minas de Finanzas", sprite: "coin", color: "#ef7d57",
+      id: "finanzas", name: "Finanzas", world: "Minas de Finanzas", sprite: "coin", color: "#c9573a", neon: "#ffcd75",
       intro: "Bajo tierra se esconde el oro... y los sobrecostes. Finanzas va más allá del presupuesto inicial: es una integración continua de costes, reservas, financiación y valor obtenido durante todo el proyecto.",
       outcomes: ["Caso de negocio que justifica la inversión", "Presupuesto y reservas adecuados", "Rendimiento de costes medido (valor ganado)", "Previsiones actualizadas para decidir a tiempo"],
       tip: "Repasa valor ganado (PV, EV, AC, CPI, SPI, EAC), reservas de contingencia vs. de gestión y el caso de negocio."
     },
     {
-      id: "interesados", name: "Interesados", world: "Aldea de los Interesados", sprite: "people", color: "#41a6f6",
+      id: "interesados", name: "Interesados", world: "Aldea de los Interesados", sprite: "people", color: "#2a8fa8", neon: "#ff4fa3",
       intro: "En la aldea todos opinan. El dominio de Interesados identifica, analiza e involucra a las personas y grupos que afectan o son afectados por el proyecto, e incluye la comunicación con ellos.",
       outcomes: ["Interesados identificados y analizados", "Involucramiento planificado y activo", "Comunicación adecuada a cada audiencia", "Expectativas gestionadas y apoyo al proyecto"],
       tip: "Repasa la matriz poder/interés, la matriz de evaluación del involucramiento y los métodos de comunicación."
     },
     {
-      id: "recursos", name: "Recursos", world: "Forja de Recursos", sprite: "anvil", color: "#566c86",
+      id: "recursos", name: "Recursos", world: "Forja de Recursos", sprite: "anvil", color: "#7a3fa0", neon: "#4fe3ff",
       intro: "Sin herramientas ni equipo no hay proyecto. Recursos cubre personas, equipos, materiales y adquisiciones: formar y liderar equipos, asignar responsabilidades y contratar proveedores.",
       outcomes: ["Equipo con roles y responsabilidades claros", "Recursos disponibles cuando se necesitan", "Conflictos gestionados de forma constructiva", "Adquisiciones y contratos bien elegidos"],
       tip: "Repasa la matriz RACI, el modelo de Tuckman, la gestión de conflictos y los tipos de contrato."
     },
     {
-      id: "riesgos", name: "Riesgos", world: "Volcán de los Riesgos", sprite: "volcano", color: "#b13e53",
+      id: "riesgos", name: "Riesgos", world: "Volcán de los Riesgos", sprite: "volcano", color: "#b8323f", neon: "#a7f070",
       intro: "El suelo tiembla. El dominio de Riesgos identifica, analiza y responde a la incertidumbre: amenazas que hay que reducir y oportunidades que hay que aprovechar.",
       outcomes: ["Riesgos identificados de forma continua", "Riesgos priorizados por probabilidad e impacto", "Respuestas con propietario asignado", "Exposición al riesgo dentro del umbral aceptado"],
       tip: "Repasa el valor monetario esperado (EMV), las estrategias para amenazas y oportunidades y los riesgos secundarios/residuales."
@@ -59,7 +59,7 @@ window.PMBOK = {
   ],
 
   finale: {
-    id: "principios", name: "Principios", world: "Templo de los Principios", sprite: "temple", color: "#ffcd75",
+    id: "principios", name: "Principios", world: "Templo de los Principios", sprite: "temple", color: "#d97a2b", neon: "#ffcd75",
     intro: "Has recorrido los siete mundos. En el templo te espera el Auditor del PMO, que pondrá a prueba los 6 principios que guían todo el PMBOK 8. Cada respuesta correcta le resta vida.",
     outcomes: [],
     tip: "Repasa los 6 principios del PMBOK 8 y cómo se reflejan en decisiones del día a día."

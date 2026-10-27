@@ -10,7 +10,7 @@
     [0.9, "Leyenda del PMO"],
     [0.75, "Senior Project Manager"],
     [0.6, "Project Manager"],
-    [0.4, "Coordinador/a de proyectos"],
+    [0.4, "Coordinadora de proyectos"],
     [0, "Aprendiz de proyectos"]
   ];
 
@@ -49,7 +49,7 @@
   function hud() {
     const hints = Array.from({ length: HINTS }, (_, i) => `<span class="gem ${i < S.hints ? "" : "off"}"></span>`).join("");
     return `<header class="hud">
-      <span class="hud-player">${Sprites.html("hero", 28)} ${esc(S.player)}</span>
+      <span class="hud-player">${Sprites.html("jefa", 40, "", S.avatar || 0)} ${esc(S.player)}</span>
       <span>PUNTOS <b>${S.score}</b></span>
       <span>RACHA <b>x${S.streak}</b></span>
       <span class="hud-hints" title="Pistas disponibles">PISTAS ${hints}</span>
@@ -60,16 +60,21 @@
   function renderTitle() {
     const saved = read(SAVE_KEY);
     const lastName = read(NAME_KEY) || "";
+    let avatar = Number(read("pt_avatar")) || 0;
     const options = SECTORS.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
+    const avatars = Array.from({ length: Sprites.variants }, (_, i) =>
+      `<button type="button" class="avatar ${i === avatar ? "on" : ""}" data-v="${i}" aria-pressed="${i === avatar}" aria-label="Jefa de proyecto ${i + 1}">${Sprites.html("jefa", 112, "", i)}</button>`).join("");
     show("title", `
       <section class="screen title-screen">
-        <div class="title-sprites">${Sprites.html("castle", 48)}${Sprites.html("tree", 48)}${Sprites.html("clock", 48)}${Sprites.html("coin", 48)}${Sprites.html("people", 48)}${Sprites.html("anvil", 48)}${Sprites.html("volcano", 48)}</div>
-        <h1 class="logo">PROJECT<br>TUTOR</h1>
-        <p class="tagline">La aventura del PMBOK® 8</p>
-        <div class="hero-row">${Sprites.html("hero", 72, "bob")}</div>
+        <h1 class="logo neon-sign"><span>PROJECT</span><span>TUTOR</span></h1>
+        <p class="tagline neon-text">La aventura del PMBOK® 8</p>
         <form class="panel form" id="start-form" autocomplete="off">
-          <label>Tu nombre de Project Manager
-            <input id="name" maxlength="16" required value="${esc(lastName)}" placeholder="Escribe tu nombre">
+          <fieldset class="avatars">
+            <legend>Elige a tu jefa de proyecto</legend>
+            ${avatars}
+          </fieldset>
+          <label>Nombre de la jefa de proyecto
+            <input id="name" maxlength="16" required value="${esc(lastName)}" placeholder="Escribe un nombre">
           </label>
           <label>Sector del proyecto
             <select id="sector"><option value="random">Aleatorio</option>${options}</select>
@@ -91,22 +96,36 @@
       let sectorId = app.querySelector("#sector").value;
       if (sectorId === "random") sectorId = SECTORS[Math.floor(Math.random() * SECTORS.length)].id;
       const ai = app.querySelector("#ai");
-      newGame(name, sectorId, ai ? ai.checked : false);
+      newGame(name, sectorId, ai ? ai.checked : false, avatar);
     });
-    on("#continue", () => { S = saved; S.current ? renderQuestion() : renderMap(); });
+    on(".avatar", (ev, el) => {
+      avatar = Number(el.dataset.v);
+      write("pt_avatar", avatar);
+      app.querySelectorAll(".avatar").forEach(b => {
+        const sel = b === el;
+        b.classList.toggle("on", sel);
+        b.setAttribute("aria-pressed", sel);
+      });
+    });
+    on("#continue", () => {
+      S = saved;
+      if (!S.current) renderMap();
+      else if (S.current.slot == null && !S.current.answered) renderBoard();
+      else renderQuestion();
+    });
     on("#howto", renderHowTo);
     on("#records", renderRecords);
   }
 
-  async function newGame(player, sectorId, useAI) {
+  async function newGame(player, sectorId, useAI, avatar) {
     write(NAME_KEY, player);
     Sfx.play("start");
-    show("loading", `<section class="screen center"><div class="panel">${Sprites.html("mentor", 64, "bob")}<p class="blink">GENERANDO TU PROYECTO...</p></div></section>`);
+    show("loading", `<section class="screen center"><div class="panel result">${Sprites.html("mentor", 112, "bob")}<p class="blink">GENERANDO TU PROYECTO...</p></div></section>`);
     const seed = Math.floor(Math.random() * 2 ** 31);
     const project = await Generator.create(sectorId, seed, useAI);
     const zones = {};
     WORLDS.concat(FINALE).forEach(z => { zones[z.id] = { done: false, correct: 0, total: 0, stars: 0, score: 0 }; });
-    S = { v: 1, player, project, zones, current: null, score: 0, hints: HINTS, streak: 0, bestStreak: 0, finished: false };
+    S = { v: 1, player, avatar, project, zones, current: null, score: 0, hints: HINTS, streak: 0, bestStreak: 0, finished: false };
     save();
     renderBriefing(true);
   }
@@ -120,7 +139,7 @@
         <dt>Sector</dt><dd>${esc(p.sectorName)}</dd>
         <dt>Cliente</dt><dd>${esc(p.client)}</dd>
         <dt>Patrocinador/a</dt><dd>${esc(p.sponsor)}</dd>
-        <dt>Director/a</dt><dd>${esc(S.player)} (¡tú!)</dd>
+        <dt>Jefa de proyecto</dt><dd>${esc(S.player)} (¡tú!)</dd>
         <dt>Objetivo</dt><dd>${esc(p.objective)}</dd>
         <dt>Presupuesto</dt><dd>${eur(p.budget)}</dd>
         <dt>Duración</dt><dd>${p.months} meses</dd>
@@ -149,8 +168,8 @@
           ${charterHTML(p)}
         </div>
         <div class="dialog">
-          ${Sprites.html("mentor", 56)}
-          <p>${first ? `¡Bienvenido/a, ${esc(S.player)}! ${esc(p.sponsor)} te ha nombrado director/a de este proyecto. Recorre los 7 mundos del PMBOK 8 y supera el Templo de los Principios.` : "Consulta el acta siempre que lo necesites: las preguntas usan estos datos."}</p>
+          ${Sprites.html("mentor", 112)}
+          <p>${first ? `¡Bienvenida, ${esc(S.player)}! ${esc(p.sponsor)} te ha nombrado jefa de este proyecto. Recorre los 7 mundos del PMBOK 8 y supera el Templo de los Principios.` : "Consulta el acta siempre que lo necesites: las preguntas usan estos datos."}</p>
         </div>
         <button class="btn primary" id="go" data-autofocus>${first ? "ACEPTAR LA MISIÓN ▶" : "VOLVER AL MAPA"}</button>
       </section>`);
@@ -160,27 +179,30 @@
   // ---------- Mapa del mundo ----------
   function renderMap() {
     const done = doneCount();
+    const building = (w, label, floors, status, cls, icon) => {
+      const rows = Array.from({ length: floors }, () => `<span class="win-row"><i></i><i></i><i></i></span><span class="balcony"></span>`).join("");
+      return `<span class="sign">${label ? `<span class="sign-n">${label}</span>` : ""}<span class="sign-t">${esc(w.name)}</span></span>
+        <span class="facade">${rows}<span class="door">${Sprites.html(icon, 40)}</span></span>
+        <span class="status">${status}</span>`;
+    };
     const cards = WORLDS.map((w, i) => {
       const z = S.zones[w.id];
-      return `<button class="world ${z.done ? "done" : ""}" data-zone="${w.id}" style="--c:${w.color}" ${z.done ? "disabled" : ""}>
-        ${Sprites.html(w.sprite, 56)}
-        <span class="world-n">MUNDO ${i + 1}</span>
-        <span class="world-name">${esc(w.name)}</span>
-        ${z.done ? stars(z.stars, 16) + `<span class="world-s">${z.correct}/${z.total}</span>` : `<span class="world-s">¡Explorar!</span>`}
+      const status = z.done ? `${stars(z.stars, 18)} <b>${z.correct}/${z.total}</b>` : "¡Entrar!";
+      return `<button class="world ${z.done ? "done" : ""}" data-zone="${w.id}" style="--c:${w.color};--n:${w.neon}" ${z.done ? "disabled" : ""} aria-label="Mundo ${i + 1}: ${esc(w.name)}${z.done ? ", completado" : ""}">
+        ${building(w, `MUNDO ${i + 1}`, 2 + (i % 3 === 1 ? 1 : 0), status, "", w.sprite)}
       </button>`;
     }).join("");
     const unlocked = done === WORLDS.length;
+    const finaleStatus = unlocked ? "¡Enfréntate al Auditor!" : "Completa los 7 mundos";
     show("map", `
       <section class="screen">
         ${hud()}
-        <h2 class="map-title">MAPA DEL MUNDO <small>${done}/${WORLDS.length} mundos</small></h2>
+        <h2 class="map-title neon-text">LA CALLE DEL PMBOK <small>${done}/${WORLDS.length} mundos completados</small></h2>
         <div class="progress"><span style="width:${(done / WORLDS.length) * 100}%"></span></div>
-        <div class="worlds">${cards}
-          <button class="world finale ${unlocked ? "" : "locked"}" data-zone="${FINALE.id}" ${unlocked ? "" : "disabled"} style="--c:${FINALE.color}">
-            ${Sprites.html(unlocked ? FINALE.sprite : "lock", 56)}
-            <span class="world-n">DESAFÍO FINAL</span>
-            <span class="world-name">${esc(FINALE.world)}</span>
-            <span class="world-s">${unlocked ? "¡Enfréntate al Auditor!" : "Completa los 7 mundos"}</span>
+        <div class="worlds">${cards}</div>
+        <div class="worlds finale-row">
+          <button class="world finale ${unlocked ? "" : "locked"}" data-zone="${FINALE.id}" ${unlocked ? "" : "disabled"} style="--c:${FINALE.color};--n:${FINALE.neon}">
+            ${building({ name: FINALE.world }, "DESAFÍO FINAL", 1, finaleStatus, "", unlocked ? FINALE.sprite : "lock")}
           </button>
         </div>
         <div class="row">
@@ -214,9 +236,9 @@
     show("intro", `
       <section class="screen">
         ${hud()}
-        <h2 class="zone-title" style="--c:${z.color}">${Sprites.html(z.sprite, 40)} ${esc(boss ? z.world : `${z.world}`)}</h2>
+        <h2 class="zone-title" style="--c:${z.color};--n:${z.neon}">${Sprites.html(z.sprite, 40)} ${esc(boss ? z.world : `${z.world}`)}</h2>
         <div class="dialog">
-          ${Sprites.html(boss ? "boss" : "mentor", 64, "bob")}
+          ${Sprites.html(boss ? "boss" : "mentor", 112, "bob")}
           <div>
             ${boss ? "" : `<p class="label">DOMINIO DE DESEMPEÑO: ${esc(z.name.toUpperCase())}</p>`}
             <p>${esc(z.intro)}</p>
@@ -230,11 +252,78 @@
         </div>
       </section>`);
     on("#start", () => {
-      S.current = { zoneId: id, questions: Questions.build(id, S.project, S.player), i: 0, answered: false, chosen: -1, hinted: false, removed: [], pts: 0 };
+      const questions = Questions.build(id, S.project, S.player);
+      S.current = { zoneId: id, questions, i: 0, answered: false, chosen: -1, hinted: false, removed: [], pts: 0,
+        board: Board.create(id, S.project.seed, questions.length), slot: null, results: {}, robber: null, lastSlot: null };
+      save();
+      renderBoard();
+    });
+    on("#back", renderMap);
+  }
+
+  // ---------- Tablero tipo Catan ----------
+  function renderBoard() {
+    const c = S.current;
+    if (!c.board) c.board = Board.create(c.zoneId, S.project.seed, c.questions.length);
+    if (!c.results) c.results = {};
+    const z = zoneById(c.zoneId);
+    const boss = c.zoneId === FINALE.id;
+    const total = c.questions.length;
+    const done = Object.keys(c.results).length;
+    const built = Object.values(c.results).filter(Boolean).length;
+    const complete = done >= total;
+    const at = (idx, dx = 0) => { const p = Board.pos(c.board, idx); return `left:${p.left + dx}%;top:${p.top}%`; };
+    const robberAt = c.robber != null ? c.robber : c.board.desert;
+
+    const chips = c.board.qhex.map((idx, k) => {
+      const n = c.board.nums[k];
+      const res = c.results[idx];
+      if (res === undefined) {
+        return `<button class="chip ${n === 6 || n === 8 ? "hot" : ""}" data-slot="${idx}" style="${at(idx)}" aria-label="Ficha ${n}: responder una pregunta">${n}</button>`;
+      }
+      return res
+        ? `<span class="piece" style="${at(idx)}" title="Poblado construido">${Sprites.html("house", 40, "", S.avatar || 0)}</span>`
+        : idx === robberAt && !boss ? "" : `<span class="chip lost" style="${at(idx)}" title="Casilla perdida">✕</span>`;
+    }).join("");
+    const guard = boss
+      ? `<span class="piece big" style="${at(c.board.desert)}">${Sprites.html("boss", 72, complete && built > total / 2 ? "defeated" : "bob")}</span>`
+      : `<span class="piece" style="${at(robberAt, robberAt === c.lastSlot ? -3 : 0)}" title="El ladrón">${Sprites.html("robber", 40)}</span>`;
+    const me = c.lastSlot != null ? `<span class="piece me" style="${at(c.lastSlot, 2)}">${Sprites.html("jefa", 64, "bob", S.avatar || 0)}</span>` : "";
+
+    const msg = complete
+      ? (built === total ? "¡Has construido un poblado en cada ficha! Mundo dominado." : `Has construido ${built} de ${total} poblados. Repasa las explicaciones y sigue adelante.`)
+      : done === 0
+        ? `Bienvenida al tablero de ${z.name}. Elige una ficha numerada: si aciertas, construyes un poblado; si fallas, el ladrón ocupa la casilla.`
+        : "Elige la siguiente ficha.";
+
+    show("board", `
+      <section class="screen">
+        ${hud()}
+        <div class="qhead" style="--c:${z.color};--n:${z.neon}">
+          <span>${Sprites.html(z.sprite, 28)} ${esc(boss ? "DESAFÍO FINAL" : z.world.toUpperCase())}</span>
+          <span>POBLADOS ${built}/${total}</span>
+        </div>
+        ${boss ? `<div class="bossbar"><span>AUDITOR DEL PMO</span><div class="hp"><span style="width:${((total - built) / total) * 100}%"></span></div></div>` : ""}
+        <div class="board-wrap">
+          <div class="board" style="aspect-ratio:${Board.W}/${Board.H}">
+            <canvas id="board-canvas" aria-label="Tablero hexagonal del mundo ${esc(z.name)}"></canvas>
+            ${guard}${chips}${me}
+          </div>
+        </div>
+        <div class="dialog">
+          ${Sprites.html(boss ? "boss" : "mentor", 72)}
+          <p>${esc(msg)}</p>
+        </div>
+        ${complete ? `<button class="btn primary" id="finish" data-autofocus>COMPLETAR MUNDO ▶</button>` : ""}
+      </section>`, complete ? "#finish" : ".chip:not(.lost)");
+
+    Board.draw(app.querySelector("#board-canvas"), c.board);
+    on(".chip[data-slot]", (ev, el) => {
+      c.slot = Number(el.dataset.slot);
       save();
       renderQuestion();
     });
-    on("#back", renderMap);
+    on("#finish", finishZone);
   }
 
   // ---------- Pregunta ----------
@@ -263,19 +352,19 @@
       <div class="feedback ${ok ? "good" : "bad"}" role="status">
         <p class="verdict">${ok ? `¡CORRECTO! +${c.pts} PUNTOS` : "¡INCORRECTO!"}</p>
         <p>${esc(q.e)}</p>
-        <button class="btn primary" id="next" data-autofocus>${c.i + 1 < total ? "SIGUIENTE ▶" : "TERMINAR ▶"}</button>
+        <button class="btn primary" id="next" data-autofocus>VOLVER AL TABLERO ▶</button>
       </div>` : "";
 
     show("question", `
       <section class="screen">
         ${hud()}
-        <div class="qhead" style="--c:${z.color}">
+        <div class="qhead" style="--c:${z.color};--n:${z.neon}">
           <span>${Sprites.html(z.sprite, 28)} ${esc(boss ? "DESAFÍO FINAL" : z.name.toUpperCase())}</span>
           <span>PREGUNTA ${c.i + 1}/${total}</span>
         </div>
         ${boss ? `<div class="bossbar"><span>AUDITOR DEL PMO</span><div class="hp"><span style="width:${(hp / total) * 100}%"></span></div></div>` : ""}
         <div class="dialog question">
-          ${Sprites.html(boss ? "boss" : "mentor", 64, c.answered ? (ok && boss ? "shake" : "") : "bob")}
+          ${Sprites.html(boss ? "boss" : "mentor", 112, c.answered ? (ok && boss ? "shake" : "") : "bob")}
           <p>${esc(q.q)}</p>
         </div>
         <div class="options">${opts}</div>
@@ -296,6 +385,12 @@
     c.answered = true;
     c.chosen = i;
     z.total++;
+    if (c.slot != null) {
+      if (!c.results) c.results = {};
+      c.results[c.slot] = i === q.answer;
+      if (i !== q.answer) c.robber = c.slot;
+      c.lastSlot = c.slot;
+    }
     if (i === q.answer) {
       S.streak++;
       S.bestStreak = Math.max(S.bestStreak, S.streak);
@@ -331,12 +426,12 @@
     const c = S.current;
     if (!c.answered) return;
     if (c.i + 1 < c.questions.length) {
-      Object.assign(c, { i: c.i + 1, answered: false, chosen: -1, hinted: false, removed: [], pts: 0 });
-      save();
-      renderQuestion();
+      Object.assign(c, { i: c.i + 1, answered: false, chosen: -1, hinted: false, removed: [], pts: 0, slot: null });
     } else {
-      finishZone();
+      c.slot = null;
     }
+    save();
+    renderBoard();
   }
 
   function finishZone() {
@@ -360,7 +455,7 @@
       <section class="screen center">
         ${hud()}
         <div class="panel result">
-          ${Sprites.html(w.sprite, 72)}
+          <div class="duo">${Sprites.html("jefa", 112, "bob", S.avatar || 0)}${Sprites.html(w.sprite, 56)}</div>
           <h2>¡MUNDO COMPLETADO!</h2>
           <p class="label">${esc(w.world.toUpperCase())}</p>
           ${stars(z.stars, 36)}
@@ -401,7 +496,7 @@
     show("final", `
       <section class="screen">
         <div class="panel result">
-          ${Sprites.html("boss", 48, "defeated")}${Sprites.html("hero", 72, "bob")}
+          <div class="duo">${Sprites.html("jefa", 128, "bob", S.avatar || 0)}${Sprites.html("boss", 112, "defeated")}</div>
           <h2>¡PROYECTO CERRADO!</h2>
           <p class="big">${S.score} PUNTOS</p>
           <p>${correct} de ${total} correctas (${Math.round(pct * 100)}%) · Mejor racha: x${S.bestStreak}</p>
@@ -441,7 +536,8 @@
             <li>Elige tu nombre y un sector: se genera un proyecto distinto en cada partida.</li>
             <li>Lee el <b>acta de constitución</b>: las preguntas usan sus datos (presupuesto, riesgos, interesados...).</li>
             <li>Recorre los <b>7 mundos</b>, uno por cada dominio de desempeño del PMBOK 8, en el orden que quieras.</li>
-            <li>Cada mundo tiene 4 preguntas. Acierta seguido para sumar <b>racha</b> (hasta +100 por pregunta).</li>
+            <li>Cada mundo es un <b>tablero hexagonal tipo Catan</b> con 4 fichas numeradas. Elige una ficha para responder su pregunta: si aciertas construyes un <b>poblado</b>; si fallas, el <b>ladrón</b> ocupa la casilla.</li>
+            <li>Acierta seguido para sumar <b>racha</b> (hasta +100 por pregunta).</li>
             <li>Tienes <b>3 pistas 50/50</b> por partida; una respuesta con pista vale la mitad.</li>
             <li>Con los 7 mundos superados se abre el <b>Templo de los Principios</b>: derrota al Auditor del PMO.</li>
             <li>Al final verás tu rango y un plan de estudio con tus puntos débiles.</li>
