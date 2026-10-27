@@ -193,7 +193,7 @@
       </button>`;
     }).join("");
     const unlocked = done === WORLDS.length;
-    const finaleStatus = unlocked ? "¡Enfréntate al Auditor!" : "Completa los 7 mundos";
+    const finaleStatus = unlocked ? "¡Convence a la PMO!" : "Completa los 7 mundos";
     show("map", `
       <section class="screen">
         ${hud()}
@@ -247,7 +247,7 @@
         ${z.outcomes.length ? `<div class="panel"><h3>Resultados que busca este dominio</h3><ul>${z.outcomes.map(o => `<li>${esc(o)}</li>`).join("")}</ul>
           <p class="hook">En tu proyecto: ${esc(projectHook(id))}</p></div>` : `<div class="panel"><h3>Los 6 principios</h3><ul>${PMBOK.principles.map(p => `<li><b>${esc(p.name)}</b>: ${esc(p.desc)}</li>`).join("")}</ul></div>`}
         <div class="row">
-          <button class="btn primary" id="start" data-autofocus>${boss ? "¡LUCHAR! ⚔" : "EMPEZAR ▶"}</button>
+          <button class="btn primary" id="start" data-autofocus>${boss ? "CONVENCER A LA PMO ▶" : "EMPEZAR ▶"}</button>
           <button class="btn small" id="back">VOLVER</button>
         </div>
       </section>`);
@@ -286,15 +286,21 @@
         : idx === robberAt && !boss ? "" : `<span class="chip lost" style="${at(idx)}" title="Casilla perdida">✕</span>`;
     }).join("");
     const guard = boss
-      ? `<span class="piece big" style="${at(c.board.desert)}">${Sprites.html("boss", 72, complete && built > total / 2 ? "defeated" : "bob")}</span>`
+      ? `<span class="piece big" style="${at(c.board.desert)}">${Sprites.html("boss", 72, "bob")}</span>`
       : `<span class="piece" style="${at(robberAt, robberAt === c.lastSlot ? -3 : 0)}" title="El ladrón">${Sprites.html("robber", 40)}</span>`;
     const me = c.lastSlot != null ? `<span class="piece me" style="${at(c.lastSlot, 2)}">${Sprites.html("jefa", 64, "bob", S.avatar || 0)}</span>` : "";
 
-    const msg = complete
-      ? (built === total ? "¡Has construido un poblado en cada ficha! Mundo dominado." : `Has construido ${built} de ${total} poblados. Repasa las explicaciones y sigue adelante.`)
-      : done === 0
-        ? `Bienvenida al tablero de ${z.name}. Elige una ficha numerada: si aciertas, construyes un poblado; si fallas, el ladrón ocupa la casilla.`
-        : "Elige la siguiente ficha.";
+    const msg = boss
+      ? (complete
+        ? (built / total >= 0.5 ? "Me has convencido: la PMO aprueba tu gestión del proyecto." : "Aún no me has convencido del todo. Repasa los principios y vuelve a intentarlo en otra partida.")
+        : done === 0
+          ? "Soy la PMO. Elige una ficha y demuéstrame que aplicas los principios: cada acierto aumenta mi confianza en tu gestión."
+          : "Elige la siguiente ficha.")
+      : complete
+        ? (built === total ? "¡Has construido un poblado en cada ficha! Mundo dominado." : `Has construido ${built} de ${total} poblados. Repasa las explicaciones y sigue adelante.`)
+        : done === 0
+          ? `Bienvenida al tablero de ${z.name}. Elige una ficha numerada: si aciertas, construyes un poblado; si fallas, el ladrón ocupa la casilla.`
+          : "Elige la siguiente ficha.";
 
     show("board", `
       <section class="screen">
@@ -303,7 +309,7 @@
           <span>${Sprites.html(z.sprite, 28)} ${esc(boss ? "DESAFÍO FINAL" : z.world.toUpperCase())}</span>
           <span>POBLADOS ${built}/${total}</span>
         </div>
-        ${boss ? `<div class="bossbar"><span>AUDITOR DEL PMO</span><div class="hp"><span style="width:${((total - built) / total) * 100}%"></span></div></div>` : ""}
+        ${boss ? `<div class="bossbar"><span>CONFIANZA DE LA PMO</span><div class="trust"><span style="width:${(built / total) * 100}%"></span></div><b>${Math.round((built / total) * 100)}%</b></div>` : ""}
         <div class="board-wrap">
           <div class="board" style="aspect-ratio:${Board.W}/${Board.H}">
             <canvas id="board-canvas" aria-label="Tablero hexagonal del mundo ${esc(z.name)}"></canvas>
@@ -334,7 +340,6 @@
     const q = c.questions[c.i];
     const total = c.questions.length;
     const zs = S.zones[c.zoneId];
-    const hp = total - zs.correct;
 
     const opts = q.options.map((o, i) => {
       let cls = "opt";
@@ -362,9 +367,9 @@
           <span>${Sprites.html(z.sprite, 28)} ${esc(boss ? "DESAFÍO FINAL" : z.name.toUpperCase())}</span>
           <span>PREGUNTA ${c.i + 1}/${total}</span>
         </div>
-        ${boss ? `<div class="bossbar"><span>AUDITOR DEL PMO</span><div class="hp"><span style="width:${(hp / total) * 100}%"></span></div></div>` : ""}
+        ${boss ? `<div class="bossbar"><span>CONFIANZA DE LA PMO</span><div class="trust"><span style="width:${(zs.correct / total) * 100}%"></span></div><b>${Math.round((zs.correct / total) * 100)}%</b></div>` : ""}
         <div class="dialog question">
-          ${Sprites.html(boss ? "boss" : "mentor", 112, c.answered ? (ok && boss ? "shake" : "") : "bob")}
+          ${Sprites.html(boss ? "boss" : "mentor", 112, c.answered ? "" : "bob")}
           <p>${esc(q.q)}</p>
         </div>
         <div class="options">${opts}</div>
@@ -400,7 +405,7 @@
       z.correct++;
       z.score += pts;
       S.score += pts;
-      Sfx.play(c.zoneId === FINALE.id ? "hit" : "ok");
+      Sfx.play("ok");
     } else {
       S.streak = 0;
       c.pts = 0;
@@ -496,8 +501,9 @@
     show("final", `
       <section class="screen">
         <div class="panel result">
-          <div class="duo">${Sprites.html("jefa", 128, "bob", S.avatar || 0)}${Sprites.html("boss", 112, "defeated")}</div>
+          <div class="duo">${Sprites.html("jefa", 128, "bob", S.avatar || 0)}${Sprites.html("boss", 112, "bob")}</div>
           <h2>¡PROYECTO CERRADO!</h2>
+          <p class="hook">${S.zones[FINALE.id].total && S.zones[FINALE.id].correct / S.zones[FINALE.id].total >= 0.5 ? "La PMO aprueba tu gestión del proyecto." : "La PMO necesita más evidencias: repasa los principios."}</p>
           <p class="big">${S.score} PUNTOS</p>
           <p>${correct} de ${total} correctas (${Math.round(pct * 100)}%) · Mejor racha: x${S.bestStreak}</p>
           <p class="rank">RANGO: ${esc(rank.toUpperCase())}</p>
@@ -539,7 +545,7 @@
             <li>Cada mundo es un <b>tablero hexagonal tipo Catan</b> con 4 fichas numeradas. Elige una ficha para responder su pregunta: si aciertas construyes un <b>poblado</b>; si fallas, el <b>ladrón</b> ocupa la casilla.</li>
             <li>Acierta seguido para sumar <b>racha</b> (hasta +100 por pregunta).</li>
             <li>Tienes <b>3 pistas 50/50</b> por partida; una respuesta con pista vale la mitad.</li>
-            <li>Con los 7 mundos superados se abre el <b>Templo de los Principios</b>: derrota al Auditor del PMO.</li>
+            <li>Con los 7 mundos superados se abre el <b>Templo de los Principios</b>: convence a la PMO.</li>
             <li>Al final verás tu rango y un plan de estudio con tus puntos débiles.</li>
           </ol>
           <p>Teclado: <b>1-4</b> o <b>A-D</b> para responder, <b>Enter</b> para continuar.</p>

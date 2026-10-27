@@ -64,7 +64,6 @@ body::after {
   flex-shrink: 0;
 }
 .sprite.dim { filter: grayscale(1) brightness(0.45); }
-.sprite.defeated { transform: rotate(90deg) translate(20%, 0); filter: grayscale(0.6) brightness(0.8); }
 
 #app { max-width: 960px; margin: 0 auto; padding: 16px 14px 80px; }
 
@@ -371,9 +370,10 @@ button:focus-visible, .world:focus-visible { outline: 3px dashed var(--warm); ou
   border: 3px solid var(--n);
   box-shadow: 0 0 8px var(--n);
 }
-.bossbar { display: flex; align-items: center; gap: 12px; font-size: 16px; color: var(--red); padding: 6px 12px; background: #140b26ee; text-shadow: 0 0 6px var(--red); }
-.hp { flex: 1; height: 16px; background: #0b0820; border: 3px solid var(--iron); box-shadow: 0 0 0 2px var(--red); }
-.hp span { display: block; height: 100%; background: var(--red); box-shadow: 0 0 10px var(--red); transition: width 0.4s steps(6); }
+.bossbar { display: flex; align-items: center; gap: 12px; font-size: 16px; color: var(--lime); padding: 6px 12px; background: #140b26ee; text-shadow: 0 0 6px var(--lime); }
+.bossbar b { color: var(--lime); min-width: 3.5em; text-align: right; }
+.trust { flex: 1; height: 16px; background: #0b0820; border: 3px solid var(--iron); box-shadow: 0 0 0 2px var(--lime); }
+.trust span { display: block; height: 100%; background: repeating-linear-gradient(90deg, var(--lime) 0 10px, #38b764 10px 14px); box-shadow: 0 0 10px var(--lime); transition: width 0.4s steps(6); }
 .options { display: grid; gap: 12px; }
 .opt {
   display: flex;
@@ -471,10 +471,8 @@ th { font-family: var(--title); font-size: 15px; color: var(--gold); }
 
 /* ---------- Animaciones ---------- */
 .bob { animation: bob 0.9s steps(2) infinite; }
-.shake { animation: shake 0.4s steps(4) 2; }
 .blink { font-family: var(--title); font-size: 18px; animation: blink 1s steps(2) infinite; }
 @keyframes bob { 50% { transform: translateY(-4px); } }
-@keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
 @keyframes blink { 50% { opacity: 0; } }
 
 .mute {

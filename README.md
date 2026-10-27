@@ -13,7 +13,7 @@ En cada partida se genera un proyecto distinto (según el sector elegido) con su
 | 5 · Aldea de los Interesados | Interesados |
 | 6 · Forja de Recursos | Recursos |
 | 7 · Volcán de los Riesgos | Riesgos |
-| Desafío final · Templo de los Principios | Los 6 principios (jefe final: el Auditor del PMO) |
+| Desafío final · Templo de los Principios | Los 6 principios (desafío final: convencer a la PMO) |
 
 Cada mundo es un tablero hexagonal tipo Catan, visto desde arriba, con terrenos según su tema (bosques en Alcance, trigales en Cronograma, minas de oro en Finanzas, lava en Riesgos...). Las preguntas son fichas numeradas: si aciertas construyes un poblado; si fallas, el ladrón ocupa la casilla.
 
@@ -82,7 +82,7 @@ js/questions.js     Preguntas calculadas y montaje de cada mundo
 js/board.js         Tablero hexagonal tipo Catan de cada mundo
 js/game.js          Pantallas, puntuación y guardado
 js/scene.js         Fondo pixel art: calle nocturna con fachadas, balcones y neones
-js/sprites.js       Sprites pixel art (jefa de proyecto, mentor, auditor e iconos)
+js/sprites.js       Sprites pixel art (jefa de proyecto, mentor, PMO e iconos)
 js/sound.js         Efectos de sonido chiptune (WebAudio)
 worker/             Cloudflare Worker para la IA opcional
 ```

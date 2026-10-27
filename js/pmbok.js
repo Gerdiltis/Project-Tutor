@@ -60,7 +60,7 @@ window.PMBOK = {
 
   finale: {
     id: "principios", name: "Principios", world: "Templo de los Principios", sprite: "temple", color: "#d97a2b", neon: "#ffcd75",
-    intro: "Has recorrido los siete mundos. En el templo te espera el Auditor del PMO, que pondrá a prueba los 6 principios que guían todo el PMBOK 8. Cada respuesta correcta le resta vida.",
+    intro: "Has recorrido los siete mundos. En el templo te espera la PMO, que quiere comprobar que aplicas los 6 principios que guían todo el PMBOK 8. Cada respuesta correcta aumenta su confianza en tu gestión.",
     outcomes: [],
     tip: "Repasa los 6 principios del PMBOK 8 y cómo se reflejan en decisiones del día a día."
   },
