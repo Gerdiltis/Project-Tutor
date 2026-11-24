@@ -1,3 +1,20 @@
+/* Fuentes alojadas en el propio sitio (licencia OFL, ver fonts/): sin peticiones a terceros */
+@font-face {
+  font-family: "Press Start 2P";
+  src: url("../fonts/press-start-2p-latin.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Tiny5";
+  src: url("../fonts/tiny5-latin.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "VT323";
+  src: url("../fonts/vt323-latin.woff2") format("woff2");
+  font-display: swap;
+}
+
 :root {
   --ink: #140f22;
   --iron: #1a1c2c;

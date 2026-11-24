@@ -28,6 +28,115 @@
   function save() { write(SAVE_KEY, S); }
   function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} }
 
+  // localStorage es compartido por todo el origen (otros proyectos de github.io del mismo usuario
+  // pueden escribirlo): nada de lo que se lee se pinta sin reconstruirlo con tipos y rangos válidos.
+  const bad = () => { throw new Error("invalid"); };
+  const str = (v, max) => (typeof v === "string" && v.length <= max ? v : bad());
+  const int = (v, min, max) => (Number.isInteger(v) && v >= min && v <= max ? v : bad());
+  const num = (v, min, max) => (typeof v === "number" && Number.isFinite(v) && v >= min && v <= max ? v : bad());
+  const list = (v, min, max, fn) => (Array.isArray(v) && v.length >= min && v.length <= max ? v.map(fn) : bad());
+  const level = (v) => (v === "alto" || v === "bajo" ? v : bad());
+  const safeAvatar = (v) => (Number.isInteger(v) && v >= 0 && v < Sprites.variants ? v : 0);
+
+  function cleanProject(p) {
+    return {
+      seed: int(p.seed, 0, 2 ** 32),
+      sectorId: SECTORS.some(s => s.id === p.sectorId) ? p.sectorId : bad(),
+      sectorName: str(p.sectorName, 60),
+      name: str(p.name, 120),
+      client: str(p.client, 80),
+      sponsor: str(p.sponsor, 60),
+      objective: str(p.objective, 160),
+      approach: str(p.approach, 20),
+      deliverables: list(p.deliverables, 3, 3, d => str(d, 100)),
+      budget: num(p.budget, 1, 1e9),
+      months: int(p.months, 1, 120),
+      team: int(p.team, 1, 50),
+      stakeholders: list(p.stakeholders, 4, 4, s => ({ name: str(s.name, 60), role: str(s.role, 80), power: level(s.power), interest: level(s.interest) })),
+      risks: list(p.risks, 3, 3, r => ({ desc: str(r.desc, 120), prob: int(r.prob, 0, 100), impact: num(r.impact, 0, 1e9) })),
+      opportunity: { desc: str(p.opportunity.desc, 120), prob: int(p.opportunity.prob, 0, 100), impact: num(p.opportunity.impact, 0, 1e9) },
+      constraints: list(p.constraints, 1, 5, c => str(c, 120)),
+      sustainability: str(p.sustainability, 200),
+      ai: p.ai === true,
+      aiError: p.aiError === true
+    };
+  }
+
+  function cleanCurrent(c, project, player, zones) {
+    if (c === null || c === undefined) return null;
+    const zoneId = zoneById(c.zoneId) && !zones[c.zoneId].done ? c.zoneId : bad();
+    // Preguntas y tablero se regeneran desde la semilla: son deterministas y así no se confía en el HTML guardado.
+    const questions = Questions.build(zoneId, project, player);
+    const n = questions.length;
+    const board = Board.create(zoneId, project.seed, n);
+    const slotOrNull = (v) => (v === null || v === undefined ? null : board.qhex.includes(v) ? v : bad());
+    const results = {};
+    Object.entries(c.results || {}).forEach(([k, v]) => {
+      const idx = Number(k);
+      if (!board.qhex.includes(idx) || typeof v !== "boolean") bad();
+      results[idx] = v;
+    });
+    if (Object.keys(results).length > n) bad();
+    return {
+      zoneId, questions, board, results,
+      i: int(c.i, 0, n - 1),
+      answered: c.answered === true,
+      chosen: int(c.chosen, -1, 3),
+      hinted: c.hinted === true,
+      removed: list(c.removed || [], 0, 2, v => int(v, 0, 3)),
+      pts: int(c.pts, 0, 1000),
+      slot: slotOrNull(c.slot),
+      robber: slotOrNull(c.robber),
+      lastSlot: slotOrNull(c.lastSlot)
+    };
+  }
+
+  function loadSave() {
+    const s = read(SAVE_KEY);
+    if (s === null) return null;
+    try {
+      const player = str(s.player, 16);
+      const project = cleanProject(s.project);
+      const zones = {};
+      WORLDS.concat(FINALE).forEach(w => {
+        const z = s.zones[w.id];
+        const max = Questions.count(w.id);
+        const total = int(z.total, 0, max);
+        zones[w.id] = { done: z.done === true, correct: int(z.correct, 0, total), total, stars: int(z.stars, 0, 3), score: int(z.score, 0, max * 200) };
+      });
+      return {
+        v: 1, player, project, zones,
+        avatar: safeAvatar(s.avatar),
+        current: cleanCurrent(s.current, project, player, zones),
+        score: int(s.score, 0, 1e5),
+        hints: int(s.hints, 0, HINTS),
+        streak: int(s.streak, 0, 100),
+        bestStreak: int(s.bestStreak, 0, 100),
+        finished: s.finished === true
+      };
+    } catch (e) {
+      clearSave();
+      return null;
+    }
+  }
+
+  function loadRecords() {
+    const recs = read(REC_KEY);
+    if (!Array.isArray(recs)) return [];
+    return recs.slice(0, 10).flatMap(r => {
+      try {
+        return [{ player: str(r.player, 16), score: int(r.score, 0, 1e5), pct: int(r.pct, 0, 100), sector: str(r.sector, 60), rank: str(r.rank, 40), date: str(r.date, 20) }];
+      } catch (e) {
+        return [];
+      }
+    });
+  }
+
+  function loadName() {
+    const n = read(NAME_KEY);
+    return typeof n === "string" ? n.slice(0, 16) : "";
+  }
+
   function show(name, html, focusSel) {
     screen = name;
     app.innerHTML = html;
@@ -58,9 +167,9 @@
 
   // ---------- Pantalla de título ----------
   function renderTitle() {
-    const saved = read(SAVE_KEY);
-    const lastName = read(NAME_KEY) || "";
-    let avatar = Number(read("pt_avatar")) || 0;
+    const saved = loadSave();
+    const lastName = loadName();
+    let avatar = safeAvatar(read("pt_avatar"));
     const options = SECTORS.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
     const avatars = Array.from({ length: Sprites.variants }, (_, i) =>
       `<button type="button" class="avatar ${i === avatar ? "on" : ""}" data-v="${i}" aria-pressed="${i === avatar}" aria-label="Jefa de proyecto ${i + 1}">${Sprites.html("jefa", 112, "", i)}</button>`).join("");
@@ -118,6 +227,7 @@
   }
 
   async function newGame(player, sectorId, useAI, avatar) {
+    player = player.slice(0, 16);
     write(NAME_KEY, player);
     Sfx.play("start");
     show("loading", `<section class="screen center"><div class="panel result">${Sprites.html("mentor", 112, "bob")}<p class="blink">GENERANDO TU PROYECTO...</p></div></section>`);
@@ -142,16 +252,16 @@
         <dt>Jefa de proyecto</dt><dd>${esc(S.player)} (¡tú!)</dd>
         <dt>Objetivo</dt><dd>${esc(p.objective)}</dd>
         <dt>Presupuesto</dt><dd>${eur(p.budget)}</dd>
-        <dt>Duración</dt><dd>${p.months} meses</dd>
-        <dt>Equipo</dt><dd>${p.team} personas</dd>
+        <dt>Duración</dt><dd>${esc(p.months)} meses</dd>
+        <dt>Equipo</dt><dd>${esc(p.team)} personas</dd>
         <dt>Enfoque sugerido</dt><dd>${esc(p.approach)}</dd>
       </dl>
       <h3>Entregables</h3><ul>${li(p.deliverables)}</ul>
       <h3>Interesados clave</h3>
-      <ul>${p.stakeholders.map(s => `<li>${esc(s.name)} — ${esc(s.role)} <small>(poder ${s.power}, interés ${s.interest})</small></li>`).join("")}</ul>
+      <ul>${p.stakeholders.map(s => `<li>${esc(s.name)} — ${esc(s.role)} <small>(poder ${esc(s.power)}, interés ${esc(s.interest)})</small></li>`).join("")}</ul>
       <h3>Riesgos identificados</h3>
-      <ul>${p.risks.map(r => `<li>${esc(r.desc)} <small>(${r.prob}% · −${eur(r.impact)})</small></li>`).join("")}
-      <li class="opp">Oportunidad: ${esc(p.opportunity.desc)} <small>(${p.opportunity.prob}% · +${eur(p.opportunity.impact)})</small></li></ul>
+      <ul>${p.risks.map(r => `<li>${esc(r.desc)} <small>(${esc(r.prob)}% · −${eur(r.impact)})</small></li>`).join("")}
+      <li class="opp">Oportunidad: ${esc(p.opportunity.desc)} <small>(${esc(p.opportunity.prob)}% · +${eur(p.opportunity.impact)})</small></li></ul>
       <h3>Restricciones</h3><ul>${li(p.constraints)}</ul>
       <h3>Sostenibilidad</h3><p>${esc(p.sustainability)}</p>`;
   }
@@ -484,7 +594,7 @@
 
     if (!S.finished) {
       S.finished = true;
-      const recs = read(REC_KEY) || [];
+      const recs = loadRecords();
       recs.push({ player: S.player, score: S.score, pct: Math.round(pct * 100), sector: S.project.sectorName, rank, date: new Date().toLocaleDateString("es-ES") });
       recs.sort((a, b) => b.score - a.score);
       write(REC_KEY, recs.slice(0, 10));
@@ -520,8 +630,8 @@
   }
 
   function renderRecords() {
-    const recs = read(REC_KEY) || [];
-    const rows = recs.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.player)}</td><td>${r.score}</td><td>${r.pct}%</td><td>${esc(r.sector)}</td><td>${esc(r.date)}</td></tr>`).join("");
+    const recs = loadRecords();
+    const rows = recs.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.player)}</td><td>${esc(r.score)}</td><td>${esc(r.pct)}%</td><td>${esc(r.sector)}</td><td>${esc(r.date)}</td></tr>`).join("");
     show("records", `
       <section class="screen">
         <div class="panel">

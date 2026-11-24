@@ -8,5 +8,15 @@ compatibility_flags = ["nodejs_compat"]
 ALLOWED_ORIGINS = "https://gerdiltis.github.io"
 MODEL = "claude-haiku-5-5"
 
+# Límite de peticiones por IP y ubicación de Cloudflare (aproximado).
+# Generoso para no bloquear a un aula que comparte IP; frena el abuso automatizado.
+[[ratelimits]]
+name = "LIMITER"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 30
+  period = 60
+
 # La clave NO va aquí. Configúrala como secreto:
 #   npx wrangler secret put ANTHROPIC_API_KEY

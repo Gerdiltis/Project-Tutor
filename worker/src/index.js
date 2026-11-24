@@ -35,6 +35,8 @@ const SYSTEM = "Eres diseñador de casos prácticos de gestión de proyectos (PM
   "Exactamente: 3 entregables, 4 roles de interesados (solo el rol, sin nombres de persona), 3 amenazas concretas, 1 oportunidad, 2 restricciones. " +
   "objective: medible. sustainability: una acción de sostenibilidad concreta para este proyecto.";
 
+const MAX_BODY = 1024;
+
 function json(body, status, cors) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", ...cors } });
 }
@@ -52,11 +54,22 @@ export default {
 
     if (request.method === "OPTIONS") return new Response(null, { headers: cors });
     if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405, cors);
+    // El Origin solo frena a otras webs en el navegador; no es autenticación (curl puede falsearlo).
+    // La protección real frente al abuso es el límite por IP de abajo.
     if (!allowed.includes(origin)) return json({ error: "origin_not_allowed" }, 403, cors);
 
+    const ip = request.headers.get("cf-connecting-ip") || "unknown";
+    if (env.LIMITER) {
+      const { success } = await env.LIMITER.limit({ key: ip });
+      if (!success) return json({ error: "rate_limited" }, 429, cors);
+    }
+
+    if (Number(request.headers.get("content-length") || 0) > MAX_BODY) return json({ error: "too_large" }, 413, cors);
+    const raw = await request.text();
+    if (raw.length > MAX_BODY) return json({ error: "too_large" }, 413, cors);
     let body;
-    try { body = await request.json(); } catch { return json({ error: "bad_json" }, 400, cors); }
-    const sector = SECTORS[body && body.sector];
+    try { body = JSON.parse(raw); } catch { return json({ error: "bad_json" }, 400, cors); }
+    const sector = body && typeof body.sector === "string" && Object.hasOwn(SECTORS, body.sector) ? SECTORS[body.sector] : null;
     if (!sector) return json({ error: "bad_sector" }, 400, cors);
     const variant = Number.isInteger(body.seed) ? Math.abs(body.seed) % 100000 : 0;
 

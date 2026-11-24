@@ -65,9 +65,18 @@ npx wrangler deploy
 
 1. Ajusta `ALLOWED_ORIGINS` en `worker/wrangler.toml` con el dominio donde publiques el juego.
 2. Copia la URL que muestra `wrangler deploy` en `js/config.js` → `aiEndpoint`.
-3. En la pantalla de título aparecerá la casilla **"Escenario generado con IA"**.
+3. Añade el origen del Worker a `connect-src` en la política de seguridad de `index.html` (por ejemplo `connect-src 'self' https://project-tutor-ai.TU-CUENTA.workers.dev`); si no, el navegador bloqueará la llamada.
+4. En la pantalla de título aparecerá la casilla **"Escenario generado con IA"**.
 
-La API key nunca llega al navegador: solo vive como secreto en el Worker, que además solo acepta los sectores del juego y los orígenes permitidos. Para un uso abierto en internet, añade una regla de *rate limiting* en Cloudflare.
+## Seguridad y privacidad
+
+- **Los datos se quedan en el navegador.** El nombre, la partida y los récords se guardan en `localStorage` y no se envían a ningún servidor. Sin IA, el juego no hace ninguna petición fuera de su propio sitio.
+- **Sin terceros.** Las fuentes (licencia OFL, en `fonts/`) se sirven desde el propio sitio: ni Google Fonts ni analítica ni CDNs.
+- **Política de seguridad de contenido (CSP)** en `index.html`: solo se ejecutan los scripts del propio sitio y no se cargan recursos externos. GitHub Pages no permite cabeceras, por eso va como `<meta>`.
+- **Datos guardados validados.** Todos los proyectos de `usuario.github.io` comparten `localStorage`, así que la partida y los récords se validan campo a campo al cargarlos, y las preguntas se regeneran desde la semilla en vez de confiar en lo guardado. Si algo no cuadra, la partida se descarta.
+- **Worker de IA:** la API key solo vive como secreto en Cloudflare. El Worker acepta únicamente los sectores del juego, rechaza cuerpos de más de 1 KB, limita a 30 peticiones por minuto por IP y tiene las dependencias fijadas con `package-lock.json`. La comprobación de origen solo frena a otras webs; no es una autenticación.
+
+Para reportar una vulnerabilidad, consulta [SECURITY.md](SECURITY.md).
 
 ## Estructura
 
@@ -84,6 +93,7 @@ js/game.js          Pantallas, puntuación y guardado
 js/scene.js         Fondo pixel art: calle nocturna con fachadas, balcones y neones
 js/sprites.js       Sprites pixel art (jefa de proyecto, mentor, PMO e iconos)
 js/sound.js         Efectos de sonido chiptune (WebAudio)
+fonts/              Fuentes pixel alojadas en el sitio (licencias OFL)
 worker/             Cloudflare Worker para la IA opcional
 ```
 

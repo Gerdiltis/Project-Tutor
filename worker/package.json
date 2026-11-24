@@ -7,10 +7,10 @@
     "deploy": "wrangler deploy"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "latest",
-    "zod": "^3.25.0"
+    "@anthropic-ai/sdk": "1.13.0",
+    "zod": "3.25.76"
   },
   "devDependencies": {
-    "wrangler": "^4.0.0"
+    "wrangler": "4.167.0"
   }
 }
